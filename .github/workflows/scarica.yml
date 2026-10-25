@@ -1,0 +1,52 @@
+name: Scarica Dukascopy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scarica:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        periodo:
+          - "2021-01-01 2021-06-30"
+          - "2021-07-01 2021-12-31"
+          - "2022-01-01 2022-06-30"
+          - "2022-07-01 2022-12-31"
+          - "2023-01-01 2023-06-30"
+          - "2023-07-01 2023-12-31"
+          - "2024-01-01 2024-06-30"
+          - "2024-07-01 2024-12-31"
+          - "2025-01-01 2025-06-30"
+          - "2025-07-01 2025-12-31"
+          - "2026-01-01 2026-06-30"
+          - "2026-07-01 2026-12-31"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy pandas pyarrow
+      - run: python scarica.py ${{ matrix.periodo }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: duka-${{ strategy.job-index }}
+          path: duka/
+
+  unisci:
+    needs: scarica
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: duka-*
+          path: duka
+          merge-multiple: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: duka-tutto
+          path: duka/
